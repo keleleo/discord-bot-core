@@ -9,15 +9,20 @@ import {
 
 import { ICallbackObject } from '../../models/ICallbackObject';
 import { ICommand } from '../../models/ICommand';
-import { ILoadedCommands } from '../../models/ILoadedCommands';
+import { ILoadedCommandList } from '../../models/ILoadedCommands';
 import { Options } from '../../models/Options';
+import { dmCheck } from '../../utils/dm.check';
+import { ownerCheck } from '../../utils/owner.check';
+import { permissionCheck } from '../../utils/permissions.check';
+import { requiredPermissionCheck } from '../../utils/requiredPermissions.check';
+import { testOnlyCheck } from '../../utils/testeOnly.check';
 import { BotController } from './../..';
 
-export function getCommandFromMessage(
+function getCommandFromMessage(
   message: Message,
   client: Client,
   options: Options,
-  loadedCommands: ILoadedCommands
+  loadedCommands: ILoadedCommandList
 ): ICommand | undefined {
   //convert message content to array
 
@@ -30,18 +35,13 @@ export function getCommandFromMessage(
   if (!args || args[0].indexOf(options.prefix) != 0) {
     return;
   }
-  let command: string = args[0].replace(options.prefix, '');
-  const iCommand: any = loadedCommands[command]?.iComand;
+  let command: string = args[0].replace(options.prefix, '').toLowerCase();
+  const iCommand: ICommand = loadedCommands[command]?.iCommand;
 
-  if (!iCommand || iCommand.slash == true) return;
-  //Returns the first argument without the prefix
   return iCommand;
 }
 
-export function messageToCallback(
-  message: Message,
-  ops: Options
-): ICallbackObject {
+function messageToCallback(message: Message, ops: Options): ICallbackObject {
   const user: User = message.author;
   const guild: Guild | null = message.guild;
   const channel: TextChannel | null =
@@ -66,21 +66,10 @@ export function messageToCallback(
   };
 }
 
-export async function callMessageCommand(
+async function callMessageCommand(
   iCommand: ICommand,
-  iCallback: ICallbackObject,
-  instance: BotController
+  iCallback: ICallbackObject
 ) {
-  if (!iCommand || iCommand.slash == true) return;
-
-  if (iCommand.testOnly) {
-    if (!instance.options.testServer) return;
-    if (!iCallback.guild) return;
-    if (
-      instance.options.testServer.indexOf(iCallback.guild.id.toString()) == -1
-    )
-      return;
-  }
   if (iCommand.callback != null) {
     const res = await iCommand.callback(iCallback);
 
@@ -94,21 +83,26 @@ export async function messageOnMessageCreate(
   message: Message,
   client: Client,
   options: Options,
-  loadedCommands: ILoadedCommands
+  loadedCommands: ILoadedCommandList
 ) {
-  const command = getCommandFromMessage(
+  const iCommand = getCommandFromMessage(
     message,
     client,
     options,
     loadedCommands
   );
-  if (command) {
+
+  if (iCommand) {
     // this message is a command
-    const callbackObject = messageToCallback(message, options);
-    await callMessageCommand(
-      command,
-      callbackObject,
-      loadedCommands[command.name].instance
-    );
+    if (!iCommand || iCommand.slash == true) return;
+
+    let instance: BotController = loadedCommands[iCommand.name].instance;
+    const iCallback = messageToCallback(message, options);
+    if (!dmCheck(iCallback, iCommand)) return;
+    if (!ownerCheck(iCallback.user, iCommand, client)) return;
+    if (!permissionCheck(iCallback.member, iCommand)) return;
+    if (!requiredPermissionCheck(iCallback.member, iCommand)) return;
+    if (!testOnlyCheck(iCallback, iCommand, instance)) return;
+    await callMessageCommand(iCommand, iCallback);
   }
 }

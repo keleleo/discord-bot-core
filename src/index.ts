@@ -22,7 +22,7 @@ export class BotController {
 
     commands?.forEach((command) => {
       command.delete();
-      console.log(command.name);
+      console.log('Deleted:',command.name);
     });
   }
 }

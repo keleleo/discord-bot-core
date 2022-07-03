@@ -1,12 +1,11 @@
 import {
+  CommandInteraction,
+  CommandInteractionOptionResolver,
   Guild,
   GuildMember,
   Message,
   TextChannel,
   User,
-  Interaction,
-  CommandInteraction,
-  CommandInteractionOptionResolver,
 } from 'discord.js';
 
 export interface ICallbackObject {

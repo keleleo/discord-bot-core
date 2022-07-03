@@ -8,7 +8,7 @@ import fs from 'fs';
 
 import { BotController } from '..';
 import { ICommand } from '../models/ICommand';
-import { ILoadedCommands } from '../models/ILoadedCommands';
+import { ILoadedCommandList } from '../models/ILoadedCommands';
 import { Options } from '../models/Options';
 import { messageOnMessageCreate } from './command/message.command';
 import {
@@ -16,7 +16,7 @@ import {
   slashInteractionCreate,
 } from './command/slash.command';
 
-var loadedCommands: ILoadedCommands = {};
+var loadedCommands: ILoadedCommandList = {};
 var options: Options;
 var client: Client;
 export default async (
@@ -42,8 +42,8 @@ export default async (
     const commandFile: any = require(_options.comandsDir + '/' + file);
 
     let iCommand: ICommand = commandFile['default'];
-    loadedCommands[iCommand.name] = {
-      iComand: iCommand,
+    loadedCommands[iCommand.name.toLowerCase()] = {
+      iCommand: iCommand,
       instance: _instance,
     };
 
@@ -67,6 +67,6 @@ export function onMessageCreate(message: Message) {
 }
 
 export function onInteractionCreate(interaction: CommandInteraction) {
-  slashInteractionCreate(interaction, options, loadedCommands);
+  slashInteractionCreate(interaction,client, options, loadedCommands);
 }
 //#endregion

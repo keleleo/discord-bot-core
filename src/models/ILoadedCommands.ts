@@ -1,9 +1,10 @@
-import { BotController } from './../index';
+import { BotController } from './..';
 import { ICommand } from './ICommand';
 
-export interface ILoadedCommands {
-  [key: string]: {
-    iComand: ICommand;
-    instance: BotController;
-  };
+export interface ILoadedCommandList {
+  [key: string]: ILoadedCommand;
+}
+export interface ILoadedCommand {
+  iCommand: ICommand;
+  instance: BotController;
 }
