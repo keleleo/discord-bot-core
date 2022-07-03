@@ -1,0 +1,26 @@
+{
+  "name": "dbc",
+  "version": "1.0.0",
+  "description": "discord bot core",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "discord",
+    "api",
+    "bot",
+    "client",
+    "node",
+    "discordapp"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "discord-bot-core"
+  },
+  "author": "keleleo",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^13.8.1"
+  }
+}
