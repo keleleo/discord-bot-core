@@ -1,4 +1,6 @@
-import { ILoadedCommands } from '../../models/ILoadedCommands';
+import { BotController } from './../../index';
+import { ILoadedCommand } from './../../models/ILoadedCommands';
+import { ILoadedCommandList } from '../../models/ILoadedCommands';
 import {
   ApplicationCommandDataResolvable,
   Client,
@@ -12,10 +14,19 @@ import {
 import { ICallbackObject } from '../../models/ICallbackObject';
 import { ICommand } from '../../models/ICommand';
 import { Options } from '../../models/Options';
+import { dmCheck } from '../../utils/dm.check';
+import { ownerCheck } from '../../utils/owner.check';
+import { testOnlyCheck } from '../../utils/testeOnly.check';
+import { requiredPermissionCheck } from '../../utils/requiredPermissions.check';
+import { permissionCheck } from '../../utils/permissions.check';
 
 export function createSlashCommand(
   command: ICommand
 ): ApplicationCommandDataResolvable {
+  if (command.name != command.name.toLowerCase()) {
+    console.error(`Slash fail: {${command.name}} -> {${command.name.toLowerCase()}}`);
+    command.name = command.name.toLowerCase();
+  }
   let slash: ApplicationCommandDataResolvable = {
     description: command.description,
     name: command.name || 'error',
@@ -26,20 +37,18 @@ export function createSlashCommand(
 
 export async function callInteractionCommand(
   iCallback: ICallbackObject,
-  loadedCommands: ILoadedCommands
+  command: ILoadedCommand,
+  client: Client
 ) {
-  const loadedCommand = loadedCommands[iCallback.interaction.commandName];
-  if (loadedCommand) {
-    if (loadedCommand.iComand.callback) {
-      let res: any = await loadedCommand.iComand.callback(iCallback);
+  if (!command.iCommand.callback) return;
 
-      if (res && (typeof res == 'string' || typeof res == 'number')) {
-        iCallback.interaction.reply({
-          content: res.toString(),
-          ephemeral: true,
-        });
-      }
-    }
+  let res: any = await command.iCommand.callback(iCallback);
+
+  if (res && (typeof res == 'string' || typeof res == 'number')) {
+    iCallback.interaction.reply({
+      content: res.toString(),
+      ephemeral: true,
+    });
   }
 }
 
@@ -75,11 +84,22 @@ export function interactionToCallback(
 
 export function slashInteractionCreate(
   interaction: CommandInteraction,
+  client: Client,
   options: Options,
-  loadedCommands: ILoadedCommands
+  commandList: ILoadedCommandList
 ) {
   if (interaction.isCommand()) {
-    const callbackObject = interactionToCallback(interaction, options);
-    callInteractionCommand(callbackObject, loadedCommands);
+    const iCallback = interactionToCallback(interaction, options);
+    const command: ILoadedCommand =
+      commandList[iCallback.interaction.commandName];
+    let instance: BotController = command.instance;
+    if (!command) return;
+    if (!permissionCheck(iCallback.member, command.iCommand)) return;
+    if (!requiredPermissionCheck(iCallback.member, command.iCommand)) return;
+    if (!testOnlyCheck(iCallback, command.iCommand, instance)) return;
+    if (!dmCheck(iCallback, command.iCommand)) return;
+    if (!ownerCheck(iCallback.user, command.iCommand, client)) return;
+
+    callInteractionCommand(iCallback, command, client);
   }
 }

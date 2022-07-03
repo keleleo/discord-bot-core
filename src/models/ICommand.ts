@@ -1,5 +1,7 @@
-import { ICallbackObject } from './ICallbackObject';
 import { ApplicationCommandOptionData, PermissionString } from 'discord.js';
+
+import { ICallbackObject } from './ICallbackObject';
+
 export interface ICommand {
   name: string;
   category: string;
@@ -7,14 +9,13 @@ export interface ICommand {
   callback?(obj: ICallbackObject): any;
   error?(obj: any): any;
   slash?: boolean | 'both';
-  requireRoles?: boolean;
+  // requireRoles?: boolean;
   testOnly?: boolean;
-  minArgs?: number;
-  maxArgs?: number;
+  // minArgs?: number;
+  // maxArgs?: number;
   requiredPermissions?: PermissionString[];
   permissions?: PermissionString[];
-  // ownerOnly?: boolean;
-  // hidden?: boolean;
-  // dm?: boolean|'both'
+  ownerOnly?: boolean;
+  dm?: boolean | 'both';
   options?: ApplicationCommandOptionData[];
 }
