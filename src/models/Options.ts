@@ -6,4 +6,5 @@ export interface Options {
   ignoreBots?: boolean;
   mongoUri?: string;
   dbOptions?: {};
+  event?:any;
 }

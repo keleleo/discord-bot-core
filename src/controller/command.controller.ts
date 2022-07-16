@@ -38,7 +38,10 @@ export default async (
 
   let slashs: any[] = [];
 
-  commands.forEach((file) => {
+  for await (let file of commands){
+    const verifyPath = await fs.statSync(_options.comandsDir + '/' + file);
+    if (!verifyPath.isFile()) return;
+
     const commandFile: any = require(_options.comandsDir + '/' + file);
 
     let iCommand: ICommand = commandFile['default'];
@@ -54,7 +57,7 @@ export default async (
         console.log('Create slash command error: Client Application undefined');
       }
     }
-  });
+  };
   console.log(`${slashs.length} Slash(s) command.`);
   if (slashs && slashs.length > 0) {
     app?.commands.set(slashs);
@@ -67,6 +70,6 @@ export function onMessageCreate(message: Message) {
 }
 
 export function onInteractionCreate(interaction: CommandInteraction) {
-  slashInteractionCreate(interaction,client, options, loadedCommands);
+  slashInteractionCreate(interaction, client, options, loadedCommands);
 }
 //#endregion
