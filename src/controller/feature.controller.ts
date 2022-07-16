@@ -8,9 +8,12 @@ export default async (_options: Options,_client:Client) => {
 
   const features = fs.readdirSync(_options.featuresDir);
 
-  features.forEach((file) => {
+  for await (let file of features){
+    const verifyPath = await fs.statSync(_options.featuresDir + '/' + file);
+    if (!verifyPath.isFile())
+      return;
     const feature = require(_options.featuresDir + '/' + file);
     const featureF = feature['default'];
-    if (featureF) featureF(_client);
-  });
+    if (featureF) featureF(_client,_options.event);
+  };
 };

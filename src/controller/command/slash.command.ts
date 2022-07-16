@@ -24,7 +24,9 @@ export function createSlashCommand(
   command: ICommand
 ): ApplicationCommandDataResolvable {
   if (command.name != command.name.toLowerCase()) {
-    console.error(`Slash fail: {${command.name}} -> {${command.name.toLowerCase()}}`);
+    console.error(
+      `Slash fail: {${command.name}} -> {${command.name.toLowerCase()}}`
+    );
     command.name = command.name.toLowerCase();
   }
   let slash: ApplicationCommandDataResolvable = {
@@ -79,6 +81,7 @@ export function interactionToCallback(
     prefix,
     text,
     member,
+    event:ops.event
   };
 }
 
@@ -92,6 +95,9 @@ export function slashInteractionCreate(
     const iCallback = interactionToCallback(interaction, options);
     const command: ILoadedCommand =
       commandList[iCallback.interaction.commandName];
+
+    if (!command) return;
+
     let instance: BotController = command.instance;
     if (!command) return;
     if (!permissionCheck(iCallback.member, command.iCommand)) return;

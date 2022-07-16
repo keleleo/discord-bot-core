@@ -63,6 +63,7 @@ function messageToCallback(message: Message, ops: Options): ICallbackObject {
     prefix,
     text,
     member,
+    event:ops.event
   };
 }
 

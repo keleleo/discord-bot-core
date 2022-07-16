@@ -19,4 +19,5 @@ export interface ICallbackObject {
   user: User;
   guild: Guild | null;
   member: GuildMember;
+  event?:any
 }
