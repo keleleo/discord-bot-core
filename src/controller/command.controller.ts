@@ -26,42 +26,47 @@ export default async (
 ) => {
   if (!_options) return;
   if (!_options.comandsDir) return;
+  console.log('Loading commands..');
+
   options = _options;
   client = _client;
-  console.log('Loading commands..');
 
   const app: ClientApplication = await _client.application?.fetch()!;
 
   const commands = fs.readdirSync(_options.comandsDir);
 
-  console.log(`Fiended ${commands.length} command(s).`);
-
   let slashs: any[] = [];
 
-  for await (let file of commands){
+  for await (let file of commands) {
     const verifyPath = await fs.statSync(_options.comandsDir + '/' + file);
-    if (!verifyPath.isFile()) return;
+    if (verifyPath.isFile()) {
+      const commandFile: any = require(_options.comandsDir + '/' + file);
 
-    const commandFile: any = require(_options.comandsDir + '/' + file);
+      let iCommand: ICommand = commandFile['default'];
+      try {
+        loadedCommands[iCommand.name.toLowerCase()] = {
+          iCommand: iCommand,
+          instance: _instance,
+        };
 
-    let iCommand: ICommand = commandFile['default'];
-    loadedCommands[iCommand.name.toLowerCase()] = {
-      iCommand: iCommand,
-      instance: _instance,
-    };
-
-    if (iCommand.slash) {
-      if (app) {
-        slashs.push(createSlashCommand(iCommand));
-      } else {
-        console.log('Create slash command error: Client Application undefined');
+        if (iCommand.slash) {
+          if (app) {
+            slashs.push(createSlashCommand(iCommand));
+          } else {
+            console.log(file, 'Client Application undefined');
+            return;
+          }
+        }
+      } catch (err) {
+        console.log(file, ' - Error on load command');
       }
     }
-  };
-  console.log(`${slashs.length} Slash(s) command.`);
+  }
+
   if (slashs && slashs.length > 0) {
     app?.commands.set(slashs);
   }
+  console.log('All command are loaded');
 };
 
 //#region Events
