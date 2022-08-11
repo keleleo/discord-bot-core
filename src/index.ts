@@ -9,11 +9,13 @@ export class BotController {
   options: Options;
   constructor(client: Client, options: Options) {
     this.options = options;
-    commandController(options, client, this);
-    featureController(options, client);
-    EventController(client, options);
+    this.init(client,options)
   }
-
+  async init(client: Client, options: Options) {
+    await commandController(options, client, this);
+    await featureController(options, client);
+    await EventController(client, options);
+  }
   async destroyAllSlashCommands(client: Client): Promise<void> {
     const app = await client.application?.fetch();
 
