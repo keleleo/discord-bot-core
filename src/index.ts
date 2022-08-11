@@ -5,9 +5,9 @@ import EventController from './controller/event.controller';
 import featureController from './controller/feature.controller';
 import { Options } from './models/Options';
 
-export class BotController {
-  options: Options;
-  constructor(client: Client, options: Options) {
+export class BotController<T = any> {
+  options: Options<T>;
+  constructor(client: Client, options: Options<T>) {
     this.options = options;
     this.init(client,options)
   }

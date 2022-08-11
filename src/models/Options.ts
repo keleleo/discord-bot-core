@@ -1,4 +1,4 @@
-export interface Options {
+export interface Options<T = any> {
   prefix: string;
   comandsDir?: string;
   featuresDir?: string;
@@ -6,5 +6,5 @@ export interface Options {
   ignoreBots?: boolean;
   mongoUri?: string;
   dbOptions?: {};
-  event?:any;
+  custom?: T;
 }

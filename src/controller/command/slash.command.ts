@@ -81,7 +81,7 @@ export function interactionToCallback(
     prefix,
     text,
     member,
-    event:ops.event
+    custom:ops.custom
   };
 }
 

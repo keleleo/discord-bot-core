@@ -8,7 +8,7 @@ import {
   User,
 } from 'discord.js';
 
-export interface ICallbackObject {
+export interface ICallbackObject<T = any> {
   channel: TextChannel;
   message: Message;
   interaction: CommandInteraction;
@@ -19,5 +19,5 @@ export interface ICallbackObject {
   user: User;
   guild: Guild | null;
   member: GuildMember;
-  event?:any
+  custom?: T;
 }
