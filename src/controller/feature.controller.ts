@@ -10,7 +10,7 @@ export default async (_options: Options, _client: Client) => {
     if (verifyPath.isFile()) {
       const feature = require(_options.featuresDir + '/' + file);
       const featureF = feature['default'];
-      if (featureF) await featureF(_client, _options.event);
+      if (featureF) await featureF(_client, _options.custom);
       else
         console.log(`Error on load ${file} feature, default method notfound`);
     }
