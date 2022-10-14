@@ -1,3 +1,4 @@
+import { ICallbackErrorObject } from './../../models/ICallbackErrorObject';
 import {
   Client,
   Guild,
@@ -7,15 +8,12 @@ import {
   User,
 } from 'discord.js';
 
+import { ErrorType } from '../../models/ICallbackErrorObject';
 import { ICallbackObject } from '../../models/ICallbackObject';
 import { ICommand } from '../../models/ICommand';
 import { ILoadedCommandList } from '../../models/ILoadedCommands';
 import { Options } from '../../models/Options';
-import { dmCheck } from '../../utils/dm.check';
-import { ownerCheck } from '../../utils/owner.check';
-import { permissionCheck } from '../../utils/permissions.check';
-import { requiredPermissionCheck } from '../../utils/requiredPermissions.check';
-import { testOnlyCheck } from '../../utils/testeOnly.check';
+import { verify } from '../../utils/verify';
 
 function getCommandFromMessage(
   message: Message,
@@ -70,12 +68,11 @@ async function callMessageCommand(
   iCommand: ICommand,
   iCallback: ICallbackObject
 ) {
-  if (iCommand.callback != null) {
-    const res = await iCommand.callback(iCallback);
+  if (!iCommand.callback) return;
+  const res = await iCommand.callback(iCallback);
 
-    if (typeof res == 'string' || typeof res == 'number') {
-      iCallback.message?.reply(res.toString());
-    }
+  if (typeof res == 'string' || typeof res == 'number') {
+    iCallback.message?.reply(res.toString());
   }
 }
 
@@ -95,13 +92,30 @@ export async function messageOnMessageCreate(
   if (iCommand) {
     // this message is a command
     if (!iCommand || iCommand.slash == true) return;
-
     const iCallback = messageToCallback(message, options);
-    if (!dmCheck(iCallback, iCommand)) return;
-    if (!ownerCheck(iCallback.user, iCommand, client)) return;
-    if (!permissionCheck(iCallback.member, iCommand)) return;
-    if (!requiredPermissionCheck(iCallback.member, iCommand)) return;
-    if (!testOnlyCheck(iCallback, iCommand, options)) return;
-    await callMessageCommand(iCommand, iCallback);
+    const error: ErrorType | undefined = verify(
+      iCallback,
+      iCommand,
+      client,
+      options
+    );
+    if (error) await callMessageCommandError(iCommand, iCallback, error);
+    else await callMessageCommand(iCommand, iCallback);
+  }
+}
+async function callMessageCommandError(
+  iCommand: ICommand,
+  iCallback: ICallbackObject,
+  error: ErrorType
+) {
+  const ICallbackError: ICallbackErrorObject = {
+    ...iCallback,
+    errorType: error,
+  };
+  if (!iCommand.error) return;
+  const res = iCommand.error(ICallbackError);
+
+  if (typeof res == 'string' || typeof res == 'number') {
+    iCallback.message?.reply(res.toString());
   }
 }

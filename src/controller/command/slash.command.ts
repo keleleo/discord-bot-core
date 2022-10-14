@@ -1,4 +1,8 @@
 import {
+  ErrorType,
+  ICallbackErrorObject,
+} from './../../models/ICallbackErrorObject';
+import {
   ApplicationCommandDataResolvable,
   Client,
   CommandInteraction,
@@ -16,7 +20,8 @@ import { dmCheck } from '../../utils/dm.check';
 import { ownerCheck } from '../../utils/owner.check';
 import { permissionCheck } from '../../utils/permissions.check';
 import { requiredPermissionCheck } from '../../utils/requiredPermissions.check';
-import { testOnlyCheck } from '../../utils/testeOnly.check';
+import { testOnlyCheck } from '../../utils/testOnly.check';
+import { verify } from '../../utils/verify';
 
 export function createSlashCommand(
   command: ICommand
@@ -95,11 +100,31 @@ export function slashInteractionCreate(
   if (!iCommand || iCommand.slash == false) return;
   const iCallback = interactionToCallback(interaction, options);
 
-  if (!permissionCheck(iCallback.member, iCommand)) return;
-  if (!requiredPermissionCheck(iCallback.member, iCommand)) return;
-  if (!testOnlyCheck(iCallback, iCommand, options)) return;
-  if (!dmCheck(iCallback, iCommand)) return;
-  if (!ownerCheck(iCallback.user, iCommand, client)) return;
+  const error: ErrorType | undefined = verify(
+    iCallback,
+    iCommand,
+    client,
+    options
+  );
+  if (error) callInteractionCommandError(iCommand, iCallback, error);
+  else callInteractionCommand(iCallback, iCommand, client);
+}
 
-  callInteractionCommand(iCallback, iCommand, client);
+async function callInteractionCommandError(
+  iCommand: ICommand,
+  iCallback: ICallbackObject,
+  error: ErrorType
+) {
+  const ICallbackError: ICallbackErrorObject = {
+    ...iCallback,
+    errorType: error,
+  };
+  if (!iCommand.error) return;
+  const res = iCommand.error(ICallbackError);
+  if (typeof res == 'string' || typeof res == 'number') {
+    iCallback.interaction.reply({
+      content: res.toString(),
+      ephemeral: true,
+    });
+  }
 }
