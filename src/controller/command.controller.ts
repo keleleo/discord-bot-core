@@ -16,65 +16,100 @@ import {
   slashInteractionCreate,
 } from './command/slash.command';
 
-var loadedCommands: ILoadedCommandList = {};
-var options: Options;
-var client: Client;
-export default async (
-  _options: Options,
-  _client: Client,
-  _instance: BotController
-) => {
-  if (!_options) return;
-  if (!_options.comandsDir) return;
-  console.log('Loading commands..');
+export class CommandController {
+  private options: Options;
+  private client: Client;
+  //----------------
+  files: string[] = [];
+  loadedCommands: ILoadedCommandList = {};
 
-  options = _options;
-  client = _client;
+  constructor(_client: Client, _options: Options) {
+    this.client = _client;
+    this.options = _options;
+  }
 
-  const app: ClientApplication = await _client.application?.fetch()!;
+  public async init() {
+    await this.findAllFiles();
+    await this.loadCommands();
+    this.addEventListener();
+  }
 
-  const commands = fs.readdirSync(_options.comandsDir);
+  private async findAllFiles() {
+    const path = this.options.commandsDir;
+    if (!path) return;
 
-  let slashs: any[] = [];
+    let folders: string[] = [path];
 
-  for await (let file of commands) {
-    const verifyPath = await fs.statSync(_options.comandsDir + '/' + file);
-    if (verifyPath.isFile()) {
-      const commandFile: any = require(_options.comandsDir + '/' + file);
+    var verifiedFolders = [];
+    while (folders.length != 0) {
+      let current = folders.pop();
+      if (!current) return;
+      verifiedFolders.push(current);
+
+      let pathsT: string[] = fs.readdirSync(current);
+
+      for await (let p of pathsT) {
+        let verify = await fs.statSync(current + '/' + p);
+        if (verify.isFile()) {
+          this.files.push(current + '/' + p);
+        } else {
+          folders.push(current + '/' + p);
+        }
+      }
+    }
+  }
+
+  private async loadCommands() {
+    const app: ClientApplication = await this.client.application?.fetch()!;
+
+    let slash: any[] = [];
+
+    for await (let file of this.files) {
+      const commandFile: any = require(file);
 
       let iCommand: ICommand = commandFile['default'];
       try {
-        loadedCommands[iCommand.name.toLowerCase()] = {
-          iCommand: iCommand,
-          instance: _instance,
-        };
+        if (!iCommand) {
+          console.error(`Warning: ${file}`);
+          return;
+        }
+        if (!iCommand.name) {
+          console.error(`${file}. name error`);
+          return;
+        }
+        const name: string = iCommand.name.toLowerCase();
+
+        if (this.loadedCommands[name]) {
+          console.error(`command name ${name} duplicated. ${file}`);
+          return;
+        }
+        this.loadedCommands[name] = iCommand;
 
         if (iCommand.slash) {
           if (app) {
-            slashs.push(createSlashCommand(iCommand));
+            slash.push(createSlashCommand(iCommand));
           } else {
             console.log(file, 'Client Application undefined');
             return;
           }
         }
       } catch (err) {
-        console.log(file, ' - Error on load command');
+        console.log(err);
       }
     }
+
+    if (slash && slash.length > 0) {
+      app?.commands.set(slash);
+    }
+    console.log('All command are loaded');
   }
 
-  if (slashs && slashs.length > 0) {
-    app?.commands.set(slashs);
+  private addEventListener() {
+    this.client.on('messageCreate', (m: Message) => {
+      messageOnMessageCreate(m, this.client, this.options, this.loadedCommands);
+    });
+    this.client.on('interactionCreate', (i: any) => {
+      slashInteractionCreate(i, this.client, this.options, this.loadedCommands);
+    });
   }
-  console.log('All command are loaded');
-};
-
-//#region Events
-export function onMessageCreate(message: Message) {
-  messageOnMessageCreate(message, client, options, loadedCommands);
 }
-
-export function onInteractionCreate(interaction: CommandInteraction) {
-  slashInteractionCreate(interaction, client, options, loadedCommands);
-}
-//#endregion

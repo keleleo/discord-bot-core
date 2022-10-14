@@ -1,15 +1,16 @@
 import { BotController } from '..';
 import { ICallbackObject } from '../models/ICallbackObject';
 import { ICommand } from '../models/ICommand';
+import { Options } from '../models/Options';
 
 export function testOnlyCheck(
   iCallback: ICallbackObject,
   iCommand: ICommand,
-  instance: BotController
+  options: Options
 ): boolean {
   if (!iCommand.testOnly) return true;
 
-  if (!instance.options.testServer) return false;
+  if (!options.testServer) return false;
   if (!iCallback.guild) return false;
-  return instance.options.testServer.includes(iCallback.guild.id.toString());
+  return options.testServer.includes(iCallback.guild.id.toString());
 }

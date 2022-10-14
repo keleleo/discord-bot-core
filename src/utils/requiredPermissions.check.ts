@@ -5,10 +5,10 @@ import { ICommand } from '../models/ICommand';
 
 export function requiredPermissionCheck(
   member: GuildMember,
-  icommand: ICommand
+  iCommand: ICommand
 ) {
-  let rp: PermissionString[] | undefined = icommand.requiredPermissions;
-  if (!rp || rp == []) return true;
+  let rp: PermissionString[] | undefined = iCommand.requiredPermissions;
+  if (!rp) return true;
   if (!member) return false;
   if (member.permissions.has('ADMINISTRATOR')) return true;
 

@@ -16,7 +16,6 @@ import { ownerCheck } from '../../utils/owner.check';
 import { permissionCheck } from '../../utils/permissions.check';
 import { requiredPermissionCheck } from '../../utils/requiredPermissions.check';
 import { testOnlyCheck } from '../../utils/testeOnly.check';
-import { BotController } from './../..';
 
 function getCommandFromMessage(
   message: Message,
@@ -36,7 +35,7 @@ function getCommandFromMessage(
     return;
   }
   let command: string = args[0].replace(options.prefix, '').toLowerCase();
-  const iCommand: ICommand = loadedCommands[command]?.iCommand;
+  const iCommand: ICommand = loadedCommands[command];
 
   return iCommand;
 }
@@ -63,7 +62,7 @@ function messageToCallback(message: Message, ops: Options): ICallbackObject {
     prefix,
     text,
     member,
-    custom:ops.custom
+    custom: ops.custom,
   };
 }
 
@@ -97,13 +96,12 @@ export async function messageOnMessageCreate(
     // this message is a command
     if (!iCommand || iCommand.slash == true) return;
 
-    let instance: BotController = loadedCommands[iCommand.name].instance;
     const iCallback = messageToCallback(message, options);
     if (!dmCheck(iCallback, iCommand)) return;
     if (!ownerCheck(iCallback.user, iCommand, client)) return;
     if (!permissionCheck(iCallback.member, iCommand)) return;
     if (!requiredPermissionCheck(iCallback.member, iCommand)) return;
-    if (!testOnlyCheck(iCallback, iCommand, instance)) return;
+    if (!testOnlyCheck(iCallback, iCommand, options)) return;
     await callMessageCommand(iCommand, iCallback);
   }
 }

@@ -1,6 +1,3 @@
-import { BotController } from './../../index';
-import { ILoadedCommand } from './../../models/ILoadedCommands';
-import { ILoadedCommandList } from '../../models/ILoadedCommands';
 import {
   ApplicationCommandDataResolvable,
   Client,
@@ -13,12 +10,13 @@ import {
 
 import { ICallbackObject } from '../../models/ICallbackObject';
 import { ICommand } from '../../models/ICommand';
+import { ILoadedCommandList } from '../../models/ILoadedCommands';
 import { Options } from '../../models/Options';
 import { dmCheck } from '../../utils/dm.check';
 import { ownerCheck } from '../../utils/owner.check';
-import { testOnlyCheck } from '../../utils/testeOnly.check';
-import { requiredPermissionCheck } from '../../utils/requiredPermissions.check';
 import { permissionCheck } from '../../utils/permissions.check';
+import { requiredPermissionCheck } from '../../utils/requiredPermissions.check';
+import { testOnlyCheck } from '../../utils/testeOnly.check';
 
 export function createSlashCommand(
   command: ICommand
@@ -39,12 +37,12 @@ export function createSlashCommand(
 
 export async function callInteractionCommand(
   iCallback: ICallbackObject,
-  command: ILoadedCommand,
+  iCommand: ICommand,
   client: Client
 ) {
-  if (!command.iCommand.callback) return;
+  if (!iCommand.callback) return;
 
-  let res: any = await command.iCommand.callback(iCallback);
+  let res: any = await iCommand.callback(iCallback);
 
   if (res && (typeof res == 'string' || typeof res == 'number')) {
     iCallback.interaction.reply({
@@ -81,7 +79,7 @@ export function interactionToCallback(
     prefix,
     text,
     member,
-    custom:ops.custom
+    custom: ops.custom,
   };
 }
 
@@ -91,21 +89,17 @@ export function slashInteractionCreate(
   options: Options,
   commandList: ILoadedCommandList
 ) {
-  if (interaction.isCommand()) {
-    const iCallback = interactionToCallback(interaction, options);
-    const command: ILoadedCommand =
-      commandList[iCallback.interaction.commandName];
+  if (!interaction.isCommand()) return;
 
-    if (!command) return;
+  const iCommand = commandList[interaction.commandName];
+  if (!iCommand || iCommand.slash == false) return;
+  const iCallback = interactionToCallback(interaction, options);
 
-    let instance: BotController = command.instance;
-    if (!command) return;
-    if (!permissionCheck(iCallback.member, command.iCommand)) return;
-    if (!requiredPermissionCheck(iCallback.member, command.iCommand)) return;
-    if (!testOnlyCheck(iCallback, command.iCommand, instance)) return;
-    if (!dmCheck(iCallback, command.iCommand)) return;
-    if (!ownerCheck(iCallback.user, command.iCommand, client)) return;
+  if (!permissionCheck(iCallback.member, iCommand)) return;
+  if (!requiredPermissionCheck(iCallback.member, iCommand)) return;
+  if (!testOnlyCheck(iCallback, iCommand, options)) return;
+  if (!dmCheck(iCallback, iCommand)) return;
+  if (!ownerCheck(iCallback.user, iCommand, client)) return;
 
-    callInteractionCommand(iCallback, command, client);
-  }
+  callInteractionCommand(iCallback, iCommand, client);
 }
