@@ -1,18 +1,17 @@
-import { ICallbackErrorObject } from './ICallbackErrorObject';
-import { ApplicationCommandOptionData, PermissionString } from 'discord.js';
+import { ApplicationCommandOptionData, PermissionResolvable } from 'discord.js';
 
-import { ICallbackObject } from './ICallbackObject';
+import { ICallback } from './ICallback';
+import { CallbackResponse } from './CallbackResponse';
 
-export interface ICommand<T = any> {
+export interface ICommand {
   name: string;
   description: string;
-  callback?(obj: ICallbackObject<T>): any;
-  error?(obj: ICallbackErrorObject<T>): any;
+  callback(callback: ICallback): CallbackResponse;
+  callbackError?(callback: ICallback): CallbackResponse;
   slash?: boolean | 'both';
-  // requireRoles?: boolean;
   testOnly?: boolean;
-  requiredPermissions?: PermissionString[];
-  permissions?: PermissionString[];
+  everyPermissions?: PermissionResolvable[];
+  anyPermissio?: PermissionResolvable[];
   ownerOnly?: boolean;
   dm?: boolean | 'both';
   options?: ApplicationCommandOptionData[];
