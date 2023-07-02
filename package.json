@@ -1,11 +1,9 @@
 {
   "name": "dbc",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "discord bot core",
   "main": "index.ts",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "scripts": {},
   "keywords": [
     "discord",
     "api",
@@ -21,6 +19,6 @@
   "author": "keleleo",
   "license": "ISC",
   "dependencies": {
-    "discord.js": "^13.8.1"
+    "discord.js": "^14.11.0"
   }
 }
